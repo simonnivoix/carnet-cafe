@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { browserClient } from "@/lib/browser";
 import { CAFE_COLUMNS, CRIT, globalOf, normalize, type Cafe, type CafePatch, type CritKey } from "@/lib/crit";
-import { addCafe, deleteCafe, updateCafe } from "./actions";
+import { addCafe, deleteCafe, updateCafe } from "@/lib/api";
 
 type SortKey = "global" | CritKey;
 
@@ -20,12 +20,13 @@ function ago(iso: string | null) {
   return new Date(t).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
-export default function Carnet({ initial, loadError }: { initial: Cafe[]; loadError: boolean }) {
-  const [cafes, setCafes] = useState<Cafe[]>(initial);
+export default function Carnet({ code, onBadCode }: { code: string; onBadCode: () => void }) {
+  const [cafes, setCafes] = useState<Cafe[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>("global");
   const [live, setLive] = useState(false);
-  const [notice, setNotice] = useState(loadError ? "Impossible de lire le carnet pour le moment." : "");
+  const [notice, setNotice] = useState("");
   const [adding, setAdding] = useState(false);
   const [, setTick] = useState(0);
   const ficheRef = useRef<HTMLElement>(null);
@@ -36,7 +37,11 @@ export default function Carnet({ initial, loadError }: { initial: Cafe[]; loadEr
 
   const refetch = useCallback(async () => {
     const { data, error } = await browserClient().from("cafes").select(CAFE_COLUMNS);
-    if (error || !data) return;
+    if (error || !data) {
+      setNotice("Impossible de lire le carnet pour le moment.");
+      return;
+    }
+    setLoaded(true);
     const fresh = data.map(normalize);
     setCafes((prev) =>
       fresh.map((row) => (pending.current[row.id] ? prev.find((p) => p.id === row.id) ?? row : row)),
@@ -64,6 +69,7 @@ export default function Carnet({ initial, loadError }: { initial: Cafe[]; loadEr
           refetch(); // rattrape ce qui a changé pendant la (re)connexion
         } else setLive(false);
       });
+    refetch();
     const onVis = () => document.visibilityState === "visible" && refetch();
     document.addEventListener("visibilitychange", onVis);
     const t = setInterval(() => setTick((x) => x + 1), 60000);
@@ -83,18 +89,18 @@ export default function Carnet({ initial, loadError }: { initial: Cafe[]; loadEr
     setCafes((prev) => prev.map((c) => (c.id === id ? { ...c, ...p, updated_at: new Date().toISOString() } : c)));
     pending.current[id] = (pending.current[id] ?? 0) + 1;
     chains.current[id] = (chains.current[id] ?? Promise.resolve()).then(async () => {
-      let res: Awaited<ReturnType<typeof updateCafe>>;
-      try {
-        res = await updateCafe(id, p);
-      } catch {
-        res = { ok: false, error: "Impossible d'enregistrer pour le moment. Réessaie dans un instant." };
-      }
+      const res = await updateCafe(code, id, p);
       pending.current[id]--;
-      if (!res.ok) setNotice(res.error);
+      if (!res.ok) {
+        setNotice(res.error);
+        if (res.badCode) return onBadCode();
+      }
       if (pending.current[id] === 0) {
         delete pending.current[id];
-        if (res.ok) setCafes((prev) => prev.map((c) => (c.id === id ? res.data : c)));
-        else refetch();
+        if (res.ok && res.data) {
+          const row = res.data;
+          setCafes((prev) => prev.map((c) => (c.id === id ? row : c)));
+        } else refetch();
       }
     });
   }
@@ -116,15 +122,15 @@ export default function Carnet({ initial, loadError }: { initial: Cafe[]; loadEr
     setAdding(false);
     const dup = cafes.find((c) => c.name.toLowerCase() === name.toLowerCase() && c.area.toLowerCase() === area.toLowerCase());
     if (dup) return select(dup.id);
-    const res = await addCafe(name, area).catch(() => null);
-    if (!res || !res.ok) return setNotice(res?.error ?? "Impossible d'enregistrer pour le moment.");
+    const res = await addCafe(code, name, area);
+    if (!res.ok) return res.badCode ? onBadCode() : setNotice(res.error);
     setCafes((prev) => (prev.some((c) => c.id === res.data.id) ? prev : [...prev, res.data]));
     select(res.data.id);
   }
 
   async function onDelete(c: Cafe) {
-    const res = await deleteCafe(c.id).catch(() => null);
-    if (!res || !res.ok) return setNotice(res?.error ?? "Impossible de supprimer pour le moment.");
+    const res = await deleteCafe(code, c.id);
+    if (!res.ok) return res.badCode ? onBadCode() : setNotice(res.error);
     setCafes((prev) => prev.filter((x) => x.id !== c.id));
     setSelected(null);
   }
@@ -191,7 +197,12 @@ export default function Carnet({ initial, loadError }: { initial: Cafe[]; loadEr
             </div>
           </div>
           <div className="list">
-            {!cafes.length ? (
+            {!loaded && !cafes.length ? (
+              <div className="empty">
+                <strong>Chargement du carnet…</strong>
+                Vos cafés et vos notes arrivent.
+              </div>
+            ) : !cafes.length ? (
               <div className="empty">
                 <strong>Aucun café dans le carnet</strong>
                 Ajoutez le café où vous êtes, puis notez-le ensemble.

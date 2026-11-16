@@ -21,16 +21,20 @@ Notes de 1 à 5. Note globale = moyenne pondérée des critères notés (un crit
 Critères retirés à la demande : « Le café » (qualité de la boisson) et le tri « Nb d'avis ».
 Les critères et poids sont définis dans `CRIT` (`lib/crit.ts` pour le site, `artifact/index.html` pour l'Artifact), champ `w`.
 
-## Vrai site (en cours) : Next.js + Supabase + Vercel
-- Dépôt privé GitHub `simonnivoix/carnet-cafe`. Next.js 16 (App Router), sans Tailwind : le CSS de l'Artifact est repris dans `app/globals.css`.
+## Vrai site : Next.js statique + Supabase, publié sur GitHub Pages
+- Adresse : https://simonnivoix.github.io/carnet-cafe/ (à partager aux amis). Code de groupe : demandé une fois par téléphone, gardé en `localStorage` (`carnet-code`).
+- Dépôt **public** GitHub `simonnivoix/carnet-cafe` (obligatoire pour Pages gratuit) : ne jamais y mettre de secret.
+  Chaque push sur `main` reconstruit et publie le site (`.github/workflows/pages.yml`, `next build` → `out/`).
+- Next.js 16 en export statique (`next.config.ts` : `output: "export"`, `basePath: "/carnet-cafe"` en prod). Pas de serveur, pas d'actions serveur. Sans Tailwind : CSS de l'Artifact dans `app/globals.css`.
 - `lib/crit.ts` : critères, poids (`CRIT`), type `Cafe`, `globalOf`.
-- `app/Carnet.tsx` : l'interface (client). Mises à jour optimistes, temps réel Supabase, rechargement au retour sur l'onglet.
-- `app/actions.ts` : actions serveur (connexion, ajout, modif, suppression). **Toutes les écritures passent par là**, après vérification du cookie de groupe, avec la clé secrète.
-- `lib/server.ts` : client admin + cookie de session (HMAC du `GROUP_CODE`, changer le code déconnecte tout le monde). Next 16 : pas de `proxy.ts`, la vérification est faite dans les pages et les actions.
-- `app/code/` : page de saisie du code de groupe.
-- Supabase : `supabase/migrations/` (table `cafes`, une colonne par critère, `price` en €, `comment`), `supabase/seed.sql` (reprise de L'hirondelle).
-  - RLS : lecture ouverte à la clé publique (nécessaire au temps réel), aucune écriture possible sans la clé secrète.
-- Variables : voir `.env.example` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `GROUP_CODE`).
+- `app/page.tsx` : écran du code de groupe, puis `app/Carnet.tsx` (interface : mises à jour optimistes, temps réel Supabase, rechargement au retour sur l'onglet).
+- `lib/api.ts` : écritures via fonctions Postgres (`add_cafe`, `update_cafe`, `delete_cafe`, `check_code`) qui exigent le code.
+- Supabase : projet `carnet-cafe` (ref `sggyjbyvaydkainkhikp`, Paris), CLI liée au dossier.
+  - `supabase/migrations/` : table `cafes` (une colonne par critère, `price` en €, `comment`) + fonctions du code de groupe. Appliquer avec `supabase db push`.
+  - Code de groupe haché (bcrypt) dans `private.group_code`, jamais dans le dépôt. Le changer :
+    `supabase db query --linked "select private.set_group_code('nouveau code');"`
+  - RLS : lecture ouverte à la clé publique (temps réel) ; aucune écriture directe, seulement via les fonctions.
+- `.env.production` (commité, valeurs publiques) : `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. `.env.db.local` (non commité) : mot de passe de la base.
 
 ## Ancienne version : Artifact claude.ai
 - `artifact/index.html` : toute l'app (HTML + CSS + JS, sans build). Publiée comme Artifact claude.ai :
