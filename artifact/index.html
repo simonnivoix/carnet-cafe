@@ -1,0 +1,409 @@
+<title>Le Carnet Café</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: zinc-counter header band, then a two-column board — ranked list left, the selected café's shared scorecard right; stacks on phones. */
+:root {
+  --bg: #EEF2EE;
+  --surface: #FFFFFF;
+  --sunken: #E3E9E4;
+  --ink: #15231C;
+  --muted: #5A6A61;
+  --line: #D3DCD5;
+  --green: #1D5A41;
+  --green-ink: #FFFFFF;
+  --brass: #A87322;
+  --good: #2A7A4B;
+  --mid: #B07419;
+  --low: #B0443A;
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-num: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1512; --surface: #16201B; --sunken: #1D2923; --ink: #E4EDE7; --muted: #92A399;
+    --line: #2A3832; --green: #4FA97F; --green-ink: #0A1410; --brass: #D8A54C;
+    --good: #5DBE84; --mid: #E2A845; --low: #E57B6F; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1512; --surface: #16201B; --sunken: #1D2923; --ink: #E4EDE7; --muted: #92A399;
+  --line: #2A3832; --green: #4FA97F; --green-ink: #0A1410; --brass: #D8A54C;
+  --good: #5DBE84; --mid: #E2A845; --low: #E57B6F; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header { background: var(--green); color: var(--green-ink); }
+header .wrap { padding-block: 28px 24px; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(30px, 5vw, 46px); line-height: 1; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+.tagline { margin: 8px 0 0; opacity: .85; max-width: 52ch; }
+.hstats { display: flex; gap: 24px; font-family: var(--f-num); }
+.hstats div { display: grid; }
+.hstats b { font-size: 26px; line-height: 1.1; }
+.hstats span { font-family: var(--f-body); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; opacity: .8; }
+
+.notice { margin: 16px 0 0; padding: 10px 14px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; }
+
+main.wrap { padding-block: 24px 64px; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 860px) { main.wrap { grid-template-columns: minmax(0, 1fr); } }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 600; margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 13px var(--f-body); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.chip:hover { border-color: var(--green); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+.btn { font: 600 14px var(--f-body); border-radius: 8px; padding: 9px 16px; cursor: pointer; border: 1px solid transparent; }
+.btn-primary { background: var(--green); color: var(--green-ink); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-danger { background: transparent; color: var(--low); padding-inline: 0; }
+
+.addform { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr) auto; gap: 8px; margin-bottom: 16px; padding: 14px; background: var(--sunken); border-radius: 10px; }
+@media (max-width: 520px) { .addform { grid-template-columns: minmax(0, 1fr); } }
+input[type="text"], input[type="number"], textarea { width: 100%; font: 400 15px var(--f-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; }
+textarea { resize: vertical; min-height: 70px; }
+
+.list { display: grid; border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 10px; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; background: transparent; text-align: left; color: inherit; font: inherit; width: 100%; }
+.row:hover { background: var(--sunken); }
+.row[aria-current="true"] { background: var(--surface); box-shadow: inset 3px 0 0 var(--brass); }
+.rank { font: 700 15px var(--f-num); color: var(--muted); text-align: right; }
+.row-name { font: 700 18px/1.2 var(--f-display); margin: 0; overflow-wrap: anywhere; }
+.row-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.minibars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 8px; max-width: 260px; }
+.mb { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.mb i { display: block; height: 100%; background: var(--green); }
+.score { font: 700 24px var(--f-num); text-align: right; line-height: 1; font-variant-numeric: tabular-nums; }
+.score small { display: block; font: 500 11px var(--f-body); color: var(--muted); margin-top: 4px; letter-spacing: .04em; }
+.s-good { color: var(--good); } .s-mid { color: var(--mid); } .s-low { color: var(--low); } .s-none { color: var(--muted); }
+
+.empty { padding: 36px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; }
+.empty strong { display: block; font: 700 19px var(--f-display); color: var(--ink); margin-bottom: 6px; }
+
+.fiche { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); display: grid; gap: 20px; }
+@media (max-width: 860px) { .fiche { position: static; } }
+.fiche h2 { font: 800 28px/1.1 var(--f-display); margin: 4px 0 0; letter-spacing: -0.01em; overflow-wrap: anywhere; text-wrap: balance; }
+.fiche-head { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
+.big { font: 700 44px/1 var(--f-num); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.big small { font-size: 16px; color: var(--muted); }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
+.live.off::before { background: var(--muted); }
+
+.rate { display: grid; gap: 14px; padding-top: 18px; border-top: 2px solid var(--ink); }
+.rline { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; }
+.rline .name { font-weight: 600; font-size: 15px; }
+.rline .hint { font-size: 12px; color: var(--muted); grid-column: 1; }
+.coef { margin-left: 8px; font: 700 11px var(--f-num); color: var(--brass); letter-spacing: .02em; }
+.dots { display: flex; gap: 4px; grid-row: 1 / span 2; grid-column: 2; }
+.dot { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font: 700 13px var(--f-num); color: var(--muted); cursor: pointer; }
+.dot:hover { border-color: var(--green); }
+.dot.on { background: var(--green); border-color: var(--green); color: var(--green-ink); }
+.dot.under { background: var(--sunken); color: var(--ink); }
+.frow { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 520px) { .frow { grid-template-columns: minmax(0, 1fr); } .dot { width: 31px; height: 31px; } }
+.field { display: grid; gap: 4px; }
+.field label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.status { font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .mb i { transition: width .35s ease; } .dot { transition: background .15s, color .15s; } }
+</style>
+
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Le Carnet Café</h1>
+      <p class="tagline">On teste des cafés à trois et on note ensemble : ambiance, calme, prix, wifi, prises. Le classement garde les meilleurs.</p>
+    </div>
+    <div class="hstats" aria-label="Résumé">
+      <div><b id="st-cafes">0</b><span>cafés testés</span></div>
+      <div><b id="st-top">–</b><span>meilleure note</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap"><p class="notice" id="notice" hidden></p></div>
+
+<main class="wrap">
+  <section aria-labelledby="list-title">
+    <div class="toolbar">
+      <p class="label" id="list-title">Classement</p>
+      <button class="btn btn-primary" id="toggle-add" type="button">+ Ajouter un café</button>
+    </div>
+    <form class="addform" id="addform" hidden autocomplete="off">
+      <input type="text" id="new-name" placeholder="Nom du café" maxlength="80" required aria-label="Nom du café">
+      <input type="text" id="new-area" placeholder="Quartier / ville" maxlength="60" aria-label="Quartier ou ville">
+      <button class="btn btn-primary" type="submit">Ajouter</button>
+    </form>
+    <div class="toolbar">
+      <div class="chips" id="sort" role="group" aria-label="Trier par"></div>
+    </div>
+    <div id="list" class="list"></div>
+  </section>
+
+  <aside id="fiche" class="fiche"></aside>
+</main>
+
+<script>
+const CRIT = [
+  { k: "ambiance", label: "Ambiance", hint: "Le mood, la déco, la lumière", w: 2 },
+  { k: "calme",    label: "Calme",    hint: "5 = silence de bibliothèque", w: 2 },
+  { k: "prix",     label: "Prix",     hint: "5 = vraiment pas cher", w: 2 },
+  { k: "wifi",     label: "Wi-Fi",    hint: "Débit et stabilité", w: 0.5 },
+  { k: "prises",   label: "Prises",   hint: "Facile de recharger ?", w: 1 },
+];
+const LS_KEY = "carnet-cafe-v2";
+
+const S = { mode: "loading", cafes: [], selected: null, sort: "global", canWrite: true };
+let api = null;
+
+const $ = (id) => document.getElementById(id);
+const fmt = (n, d = 1) => n == null ? "–" : n.toFixed(d).replace(".", ",");
+const cls = (n) => n == null ? "s-none" : n >= 4 ? "s-good" : n >= 3 ? "s-mid" : "s-low";
+const avg = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
+const el = (tag, attrs = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c != null) e.append(c);
+  return e;
+};
+const score = (c, k) => { const v = c.scores && c.scores[k]; return typeof v === "number" ? v : null; };
+/* moyenne pondérée : ambiance, calme et prix comptent double */
+const globalOf = (c) => {
+  let sum = 0, w = 0;
+  for (const k of CRIT) { const v = score(c, k.k); if (v != null) { sum += v * k.w; w += k.w; } }
+  return w ? sum / w : null;
+};
+const notice = (msg) => { const n = $("notice"); n.textContent = msg || ""; n.hidden = !msg; };
+
+function ago(t) {
+  if (!t) return "";
+  const m = Math.round((Date.now() - t) / 60000);
+  if (m < 1) return "à l'instant";
+  if (m < 60) return `il y a ${m} min`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `il y a ${h} h`;
+  return new Date(t).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+/* ---------- writes: one at a time per café, applied locally first ---------- */
+const chains = {};
+function patch(id, p) {
+  const c = S.cafes.find(x => x.id === id);
+  if (!c) return;
+  if (p.scores) c.scores = { ...(c.scores || {}), ...p.scores };
+  for (const [k, v] of Object.entries(p)) if (k !== "scores") c[k] = v;
+  c.updatedAt = Date.now();
+  const body = { ...p, updatedAt: c.updatedAt };
+  chains[id] = (chains[id] || Promise.resolve()).then(() => api.update(id, body)).catch(e => notice(errText(e)));
+}
+function errText(e) {
+  if (e && e.code === "invalid_argument") return "Tu n'as pas les droits pour modifier ce carnet.";
+  if (e && e.code === "quota_exceeded") return "Le carnet est plein. Retire quelques cafés pour en ajouter.";
+  return "Impossible d'enregistrer pour le moment. Réessaie dans un instant.";
+}
+
+/* ---------- list ---------- */
+function renderSort() {
+  const opts = [{ k: "global", label: "Note globale" }, ...CRIT];
+  $("sort").replaceChildren(...opts.map(o => el("button", {
+    class: "chip", type: "button", "aria-pressed": String(S.sort === o.k), text: o.label,
+    onclick: () => { S.sort = o.k; renderSort(); renderList(); },
+  })));
+}
+
+function renderList() {
+  const rated = S.cafes.map(globalOf).filter(v => v != null);
+  $("st-cafes").textContent = rated.length;
+  $("st-top").textContent = rated.length ? fmt(Math.max(...rated)) : "–";
+
+  const list = $("list");
+  if (S.mode === "loading") {
+    list.replaceChildren(el("div", { class: "empty" }, el("strong", { text: "Chargement du carnet…" }), "Vos cafés et vos notes arrivent."));
+    return;
+  }
+  if (!S.cafes.length) {
+    list.replaceChildren(el("div", { class: "empty" }, el("strong", { text: "Aucun café dans le carnet" }),
+      "Ajoutez le café où vous êtes, puis notez-le ensemble."));
+    return;
+  }
+  const key = (c) => S.sort === "global" ? globalOf(c) : score(c, S.sort);
+  const rows = [...S.cafes].sort((a, b) => {
+    const ka = key(a), kb = key(b);
+    if (ka == null && kb == null) return (b.createdAt || 0) - (a.createdAt || 0);
+    if (ka == null) return 1; if (kb == null) return -1;
+    return kb - ka || (globalOf(b) ?? 0) - (globalOf(a) ?? 0);
+  });
+  const sub = S.sort === "global" ? "/5" : CRIT.find(x => x.k === S.sort).label.toLowerCase();
+  list.replaceChildren(...rows.map((c, i) => {
+    const v = key(c);
+    return el("button", { class: "row", type: "button", "aria-current": String(S.selected === c.id), onclick: () => select(c.id) },
+      el("span", { class: "rank", text: v == null ? "·" : String(i + 1) }),
+      el("div", {},
+        el("p", { class: "row-name", text: c.name }),
+        el("div", { class: "row-meta", text: [c.area, typeof c.price === "number" ? `${fmt(c.price, 2)} €` : null].filter(Boolean).join(" · ") || (v == null ? "Pas encore noté" : "") }),
+        el("div", { class: "minibars", "aria-hidden": "true" }, CRIT.map(k => {
+          const s = score(c, k.k);
+          return el("span", { class: "mb", title: `${k.label} : ${fmt(s, 0)}` }, el("i", { style: `width:${s ? s / 5 * 100 : 0}%` }));
+        }))),
+      el("div", { class: `score ${cls(v)}` }, fmt(v), el("small", { text: sub })));
+  }));
+}
+
+/* ---------- fiche: the shared scorecard ---------- */
+function renderFiche() {
+  const f = $("fiche");
+  // keep whatever someone is typing when a live update arrives
+  const act = document.activeElement;
+  const keep = act && f.contains(act) && act.id ? { id: act.id, value: act.value, a: act.selectionStart, b: act.selectionEnd } : null;
+
+  const c = S.cafes.find(x => x.id === S.selected);
+  if (!c) {
+    f.replaceChildren(
+      el("p", { class: "label", text: "La fiche" }),
+      el("h2", { text: S.cafes.length ? "Choisis un café" : "Votre premier café" }),
+      el("p", { class: "status", text: S.cafes.length
+        ? "Ouvre un café du classement pour voir sa note ou la remplir ensemble."
+        : "Ajoutez le café où vous êtes. Chacun ouvre la page sur son téléphone, et ce que l'un note s'affiche chez les deux autres." }));
+    return;
+  }
+  const g = globalOf(c);
+  const ro = !S.canWrite;
+  f.replaceChildren(
+    el("div", { class: "fiche-head" },
+      el("div", {},
+        el("p", { class: "label", text: c.area || "Café" }),
+        el("h2", { text: c.name }),
+        el("span", { class: "live" + (S.mode === "shared" ? "" : " off"), text: S.mode === "shared"
+          ? (c.updatedAt ? `Note commune · modifiée ${ago(c.updatedAt)}` : "Note commune, en direct")
+          : "Note enregistrée sur cet appareil" })),
+      el("div", { class: `big ${cls(g)}` }, fmt(g), el("small", { text: "/5" }),
+        el("div", { class: "status", style: "font:500 11px var(--f-body);margin-top:6px", text: "moyenne pondérée" }))),
+    el("div", { class: "rate" },
+      CRIT.map(k => {
+        const cur = score(c, k.k);
+        return el("div", { class: "rline" },
+          el("span", { class: "name" }, k.label, el("span", { class: "coef", text: `coef ${String(k.w).replace(".", ",")}` })),
+          el("div", { class: "dots", role: "group", "aria-label": k.label }, [1, 2, 3, 4, 5].map(n => el("button", {
+            type: "button", class: "dot" + (cur === n ? " on" : cur && n < cur ? " under" : ""), text: String(n),
+            "aria-pressed": String(cur === n), "aria-label": `${k.label} ${n} sur 5`, disabled: ro,
+            onclick: () => { patch(c.id, { scores: { [k.k]: cur === n ? null : n } }); renderList(); renderFiche(); },
+          }))),
+          el("span", { class: "hint", text: k.hint }));
+      }),
+      el("div", { class: "frow" },
+        el("div", { class: "field" },
+          el("label", { for: "f-price", text: "Prix d'une boisson (€)" }),
+          el("input", { type: "number", id: "f-price", min: "0", max: "30", step: "0.1", inputmode: "decimal", placeholder: "3,50", disabled: ro,
+            value: typeof c.price === "number" ? String(c.price) : "",
+            onchange: (e) => { const v = parseFloat(String(e.target.value).replace(",", ".")); patch(c.id, { price: isFinite(v) && v > 0 ? Math.round(v * 100) / 100 : null }); renderList(); } })),
+        el("div", { class: "field" },
+          el("label", { for: "f-comment", text: "Notre avis" }),
+          el("textarea", { id: "f-comment", maxlength: "400", placeholder: "Top pour bosser le matin, blindé à midi, tables trop petites pour 3…", disabled: ro,
+            onchange: (e) => patch(c.id, { comment: e.target.value.trim().slice(0, 400) }) }, c.comment || "")))),
+    el("div", { class: "foot" },
+      el("span", { class: "status", text: "Chaque clic est enregistré tout de suite. Re-cliquer une note l'efface." }),
+      ro ? null : el("button", { class: "btn btn-danger", type: "button", text: "Retirer ce café",
+        onclick: (e) => confirmDelete(e.currentTarget, c) }))
+  );
+
+  if (keep) {
+    const n = $(keep.id);
+    if (n) { n.value = keep.value; n.focus(); try { n.setSelectionRange(keep.a, keep.b); } catch {} }
+  }
+}
+
+function select(id) {
+  S.selected = id;
+  renderList(); renderFiche();
+  if (matchMedia("(max-width: 860px)").matches) $("fiche").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function confirmDelete(btn, c) {
+  if (btn.dataset.armed) {
+    api.remove(c.id).then(() => { S.cafes = S.cafes.filter(x => x.id !== c.id); S.selected = null; renderList(); renderFiche(); })
+      .catch(e => notice(errText(e)));
+    return;
+  }
+  btn.dataset.armed = "1";
+  btn.textContent = `Sûr ? Retirer « ${c.name} »`;
+  setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = "Retirer ce café"; } }, 4000);
+}
+
+/* ---------- add ---------- */
+$("toggle-add").addEventListener("click", () => {
+  const f = $("addform"); f.hidden = !f.hidden;
+  if (!f.hidden) $("new-name").focus();
+});
+$("addform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("new-name").value.trim().slice(0, 80);
+  if (!name) return;
+  const area = $("new-area").value.trim().slice(0, 60);
+  const dup = S.cafes.find(c => c.name.toLowerCase() === name.toLowerCase() && (c.area || "").toLowerCase() === area.toLowerCase());
+  $("addform").hidden = true; $("new-name").value = ""; $("new-area").value = "";
+  if (dup) { select(dup.id); return; }
+  const data = { name, area, scores: {}, createdAt: Date.now() };
+  try {
+    const id = await api.add(data);
+    if (!S.cafes.some(c => c.id === id)) S.cafes.push({ id, ...data });
+    select(id);
+  } catch (err) { notice(errText(err)); }
+});
+
+/* ---------- storage ---------- */
+function startLocal(reason) {
+  S.mode = "local";
+  try { S.cafes = JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { S.cafes = []; }
+  const persist = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(S.cafes)); } catch {} };
+  api = {
+    add: async (d) => { const id = "c" + Date.now().toString(36); S.cafes.push({ id, ...d }); persist(); return id; },
+    update: async () => persist(),
+    remove: async (id) => { S.cafes = S.cafes.filter(c => c.id !== id); persist(); },
+  };
+  notice(reason);
+  renderList(); renderFiche();
+}
+
+async function start() {
+  const cl = window.claude;
+  if (!cl || typeof cl.use !== "function") { startLocal("Mode local : les notes restent sur cet appareil. Ouvre la version en ligne pour noter à trois."); return; }
+  const [db, user] = await Promise.all([cl.use("db"), cl.use("user")]);
+  if (!db) { startLocal("Le carnet partagé n'est pas accessible ici (connecte-toi à claude.ai). Les notes restent sur cet appareil pour l'instant."); return; }
+  const cw = user ? await user.can("data.write") : null;
+  S.canWrite = cw !== false;
+  if (!S.canWrite) $("toggle-add").hidden = true;
+
+  api = {
+    add: async (d) => (await db.collection("cafes").add(d)).id,
+    update: (id, body) => db.doc("cafes/" + id).update(body),
+    remove: (id) => db.doc("cafes/" + id).delete(),
+  };
+
+  const timer = setTimeout(() => notice("Le carnet met du temps à répondre. Ce qui est affiché n'est peut-être pas à jour."), 10000);
+  db.collection("cafes").onSnapshot(snap => {
+    S.cafes = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => typeof c.name === "string" && c.name);
+    S.mode = "shared";
+    if (!snap.metadata.fromCache) { clearTimeout(timer); notice(""); }
+    if (S.selected && !S.cafes.some(c => c.id === S.selected)) S.selected = null;
+    renderList(); renderFiche();
+  }, (e) => {
+    clearTimeout(timer);
+    notice(e.code === "revoked" ? "L'accès au carnet a changé." : "Impossible de lire le carnet pour le moment.");
+  });
+  setInterval(() => { if (S.selected && !$("fiche").contains(document.activeElement)) renderFiche(); }, 60000);
+}
+
+renderSort(); renderList(); renderFiche();
+start();
+</script>
