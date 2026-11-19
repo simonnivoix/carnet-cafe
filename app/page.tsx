@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import { checkCode, saveCode, savedCode } from "@/lib/api";
 import Carnet from "./Carnet";
 import { Cup } from "./Cup";
+import { watchUpdates } from "@/lib/update";
 
 export default function Home() {
   // undefined = on lit le localStorage, null = pas de code
   const [code, setCode] = useState<string | null | undefined>(undefined);
   useEffect(() => setCode(savedCode()), []);
+  useEffect(() => watchUpdates(), []);
 
   if (code === undefined) return null;
   if (!code) return <Gate onOk={(c) => (saveCode(c), setCode(c))} />;

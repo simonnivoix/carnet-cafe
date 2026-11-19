@@ -52,3 +52,9 @@ Les critères et poids sont définis dans `CRIT` (`lib/crit.ts` pour le site, `a
 - Mouvement : lignes du classement qui arrivent en cascade, note qui rebondit + onde dorée au clic (`.dot.on`), chiffre de la note qui remonte, appui à 0,97 ; fondu simple en mouvement réduit.
 - Sur téléphone (< 520 px), les notes 1-5 passent sous le critère en gros boutons.
 - Interface en **français**, tutoiement.
+
+## Mise à jour automatique (19/11)
+- GitHub Pages laisse le navigateur garder la page 10 min (`cache-control: max-age=600`) : après un déploiement, Safari montrait l'ancienne version.
+- `next.config.ts` grave un numéro de build (`GITHUB_SHA` en CI, sinon date) dans `NEXT_PUBLIC_BUILD` et l'écrit dans `public/version.json` (non commité, régénéré à chaque build).
+- `lib/update.ts` (`watchUpdates()`, appelé dans `app/page.tsx`) relit `version.json` sans cache au chargement et au retour sur l'onglet ; si le build diffère → `location.replace(?v=<build>)`. Un seul rechargement par version (`sessionStorage` `carnet-vseen`), rien hors-ligne ni en dev.
+- Ne marche que pour les visiteurs qui ont déjà une version qui contient ce code : la toute première fois, un rechargement manuel peut encore être nécessaire.
