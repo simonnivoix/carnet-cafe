@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { checkCode, saveCode, savedCode } from "@/lib/api";
 import Carnet from "./Carnet";
+import { Cup } from "./Cup";
 
 export default function Home() {
   // undefined = on lit le localStorage, null = pas de code
@@ -31,21 +32,16 @@ function Gate({ onOk }: { onOk: (code: string) => void }) {
 
   return (
     <div className="gate">
-      <header>
-        <div className="wrap">
-          <div>
-            <h1>Le Carnet Café</h1>
-            <p className="tagline">Le carnet de notes de nos cafés. Entre le code du groupe pour l&apos;ouvrir.</p>
-          </div>
-        </div>
-      </header>
       <div className="gate-card">
-        <h2>Code du groupe</h2>
+        <Cup size={64} className="gate-cup" />
+        <h1>Le Carnet Café</h1>
+        <p className="tagline">Entre, installe-toi. Il ne manque que le code du groupe pour ouvrir le carnet.</p>
         <form onSubmit={submit} autoComplete="off">
+          <label className="field-label" htmlFor="gate-code">Code du groupe</label>
           <input
+            id="gate-code"
             type="text"
             name="code"
-            aria-label="Code du groupe"
             placeholder="Le code que vous avez choisi"
             autoCapitalize="none"
             autoCorrect="off"

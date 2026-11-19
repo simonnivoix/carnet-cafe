@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { browserClient } from "@/lib/browser";
 import { CAFE_COLUMNS, CRIT, globalOf, normalize, type Cafe, type CafePatch, type CritKey } from "@/lib/crit";
 import { addCafe, deleteCafe, updateCafe } from "@/lib/api";
+import { Cup, Ring, Star, greeting } from "./Cup";
 
 type SortKey = "global" | CritKey;
 
@@ -151,18 +152,22 @@ export default function Carnet({ code, onBadCode }: { code: string; onBadCode: (
 
   return (
     <>
-      <header>
+      <header className="hero">
         <div className="wrap">
-          <div>
+          <div className="hero-text">
+            <p className="hello">
+              <Cup size={30} />
+              {greeting()}, installez-vous.
+            </p>
             <h1>Le Carnet Café</h1>
             <p className="tagline">
-              On teste des cafés à trois et on note ensemble : ambiance, calme, prix, wifi, prises. Le classement garde les meilleurs.
+              Les cafés qu&apos;on teste à trois, notés ensemble : ambiance, calme, prix, wifi, prises. Les meilleurs remontent tout seuls.
             </p>
           </div>
-          <div className="hstats" aria-label="Résumé">
-            <div><b>{rated.length}</b><span>cafés testés</span></div>
-            <div><b>{rated.length ? fmt(Math.max(...rated)) : "–"}</b><span>meilleure note</span></div>
-          </div>
+          <dl className="hstats" aria-label="Résumé">
+            <div><dt>cafés testés</dt><dd>{rated.length}</dd></div>
+            <div><dt>meilleure note</dt><dd>{rated.length ? fmt(Math.max(...rated)) : "–"}</dd></div>
+          </dl>
         </div>
       </header>
 
@@ -199,23 +204,40 @@ export default function Carnet({ code, onBadCode }: { code: string; onBadCode: (
           <div className="list">
             {!loaded && !cafes.length ? (
               <div className="empty">
-                <strong>Chargement du carnet…</strong>
+                <Cup size={52} />
+                <strong>Le café passe…</strong>
                 Vos cafés et vos notes arrivent.
               </div>
             ) : !cafes.length ? (
               <div className="empty">
-                <strong>Aucun café dans le carnet</strong>
+                <Cup size={52} />
+                <strong>Le carnet attend son premier café</strong>
                 Ajoutez le café où vous êtes, puis notez-le ensemble.
               </div>
             ) : (
               rows.map((c, i) => {
                 const v = key(c);
                 const meta = [c.area, c.price != null ? `${fmt(c.price, 2)} €` : null].filter(Boolean).join(" · ");
+                const top = sort === "global" && i === 0 && v != null && rated.length > 1;
                 return (
-                  <button key={c.id} className="row" type="button" aria-current={selected === c.id} onClick={() => select(c.id)}>
+                  <button
+                    key={c.id}
+                    className={"row" + (top ? " top" : "")}
+                    style={{ "--i": Math.min(i, 8) } as React.CSSProperties}
+                    type="button"
+                    aria-current={selected === c.id}
+                    onClick={() => select(c.id)}
+                  >
                     <span className="rank">{v == null ? "·" : i + 1}</span>
                     <div>
-                      <p className="row-name">{c.name}</p>
+                      <p className="row-name">
+                        {c.name}
+                        {top && (
+                          <span className="fav">
+                            <Star size={12} /> coup de cœur
+                          </span>
+                        )}
+                      </p>
                       <div className="row-meta">{meta || (v == null ? "Pas encore noté" : "")}</div>
                       <div className="minibars" aria-hidden="true">
                         {CRIT.map((k) => (
@@ -236,12 +258,12 @@ export default function Carnet({ code, onBadCode }: { code: string; onBadCode: (
           </div>
         </section>
 
-        <aside className="fiche" ref={ficheRef}>
+        <aside className={"fiche" + (current ? "" : " fiche-empty")} ref={ficheRef}>
           {current ? (
             <Fiche key={current.id} c={current} live={live} onPatch={(p) => patch(current.id, p)} onDelete={() => onDelete(current)} />
           ) : (
             <>
-              <p className="label">La fiche</p>
+              <Cup size={56} className="fiche-cup" />
               <h2>{cafes.length ? "Choisis un café" : "Votre premier café"}</h2>
               <p className="status">
                 {cafes.length
@@ -277,9 +299,12 @@ function Fiche({ c, live, onPatch, onDelete }: { c: Cafe; live: boolean; onPatch
           </span>
         </div>
         <div className={`big ${cls(g)}`}>
-          {fmt(g)}
-          <small>/5</small>
-          <div className="status" style={{ font: "500 11px var(--f-body)", marginTop: 6 }}>moyenne pondérée</div>
+          <Ring />
+          <span key={fmt(g)} className="big-n">
+            {fmt(g)}
+            <small>/5</small>
+          </span>
+          <span className="big-sub">moyenne pondérée</span>
         </div>
       </div>
 
@@ -316,7 +341,7 @@ function Fiche({ c, live, onPatch, onDelete }: { c: Cafe; live: boolean; onPatch
             <label htmlFor="f-price">Prix d&apos;une boisson (€)</label>
             <SyncedInput
               id="f-price"
-              value={c.price != null ? String(c.price) : ""}
+              value={c.price != null ? String(c.price).replace(".", ",") : ""}
               onCommit={(s) => {
                 const v = parseFloat(s.replace(",", "."));
                 onPatch({ price: isFinite(v) && v > 0 && v <= 30 ? Math.round(v * 100) / 100 : null });

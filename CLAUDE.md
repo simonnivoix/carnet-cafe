@@ -44,7 +44,11 @@ Les critères et poids sont définis dans `CRIT` (`lib/crit.ts` pour le site, `a
 - Données Artifact db : collection `cafes`, `{ name, area, scores: { ambiance, calme, prix, wifi, prises }, price, comment, createdAt, updatedAt }`.
   Règle d'accès : lecture `view`, écriture `interact` (Contributeur). Hors claude.ai : mode local (`localStorage`, clé `carnet-cafe-v2`).
 
-## Design
-- Vert « façade de café » + laiton, thèmes clair et sombre via tokens CSS sur `:root`.
-- Polices : Bricolage Grotesque (titres), Inter (texte), JetBrains Mono (chiffres).
+## Design (refait le 19/11 : ambiance « café du coin »)
+- Chaleureux, reposant et un peu pétillant : fond crème (mousse de lait), encre espresso, accent cannelle `--accent`, miel `--honey` ; thème sombre « le soir » (bois torréfié, lampe ambrée). Tokens CSS sur `:root` dans `app/globals.css`.
+- Grain de papier (`body::before`) + lumière de lampe sur un calque fixe (`body::after`, car iOS ignore `background-attachment: fixed`).
+- Polices : Fraunces (titres et chiffres, axes SOFT/WONK) et Figtree (texte), via `next/font/google` dans `app/layout.tsx`.
+- `app/Cup.tsx` : tasse qui fume (`Cup`), trace de tasse derrière la note de la fiche (`Ring`), étoile du « coup de cœur » (`Star`, 1er du classement en tri « Note globale »), `greeting()` (Bonjour / Bon après-midi / Bonsoir).
+- Mouvement : lignes du classement qui arrivent en cascade, note qui rebondit + onde dorée au clic (`.dot.on`), chiffre de la note qui remonte, appui à 0,97 ; fondu simple en mouvement réduit.
+- Sur téléphone (< 520 px), les notes 1-5 passent sous le critère en gros boutons.
 - Interface en **français**, tutoiement.
